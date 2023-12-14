@@ -38,14 +38,20 @@ resource "aws_iam_policy" "node_efs_policy" {
   )
 }
 
+resource "aws_kms_key" "efs_encryption_key" {
+  description             = "KMS key for EFS encryption"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
 resource "aws_efs_file_system" "kube" {
   tags = {
     Name = "llamacpp-efs"
   }
   creation_token = "eks-efs"
   encrypted      = true
+  kms_key_id     = aws_kms_key.efs_encryption_key.arn
 }
-
 resource "aws_efs_mount_target" "mount" {
     file_system_id = aws_efs_file_system.kube.id
     subnet_id = each.value
